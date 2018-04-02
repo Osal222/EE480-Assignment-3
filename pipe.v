@@ -7,7 +7,7 @@
 `define Imm           [7:0]
 `define EN            [31:0]
 `define STATE         [3:0]
-`define OP            [5:0]
+`define OP            [4:0]
 
 // This stuff should be fine
 `define REGSIZE        [15:0]
@@ -66,16 +66,16 @@
 
 
 /////////////////////////////////////////////////////////////////////
-module decode(out, regd, in, ireg);
-output reg `OPCode out;
+module decode(opout, regd, in, ir);
+output reg `OP opout;
 output reg `REGNAME regd;
 
 input wire `OP in;
-input `WORD ireg;
+input `WORD ir;
 
-always @(in, ireg) begin
+always @(in, ir) begin
 	if((in == `OPJumpf) || (in == `OPJump) || (in == `OPCall)) begin
-		out = `OPNop;  // 2nd word of li becomes nop
+		opout = `OPNop;  // 2nd word of li becomes nop
 		regd = 0;           // No writing will occur
 	end else begin
 		case (ir `OPCode)
@@ -95,8 +95,8 @@ always @(in, ireg) begin
 				`SRCJumpf: opout = `OPJumpf;
     			endcase
       	end
-      	`OPStore: begin opout = ir `OPCode; regdst <= 0; end
-           default: begin opout = ir `OPCode; regdst <= ir `Dest; end
+      	`OPStore: begin opout = ir `OPCode; regd <= 0; end
+           default: begin opout = ir `OPCode; regd <= ir `Dest; end
     endcase
   end
 end
@@ -109,13 +109,13 @@ endmodule
 
 // ALU is finished for the most part
 /////////////////////////////////////////////////////////////////////
-module alu(Result, OPCode, Instuct1, Instruct2);
-output reg `WORD Result;
-input wire `OP opcode;
+module alu(result, OPCode, Instruct1, Instruct2);
+output reg `WORD result;
+input wire `OP OPCode;
 input wire `WORD Instruct1, Instruct2;
 
-always @(opcode, Instruct1, Instruct2) begin
-  case (opcode)
+always @(OPCode, Instruct1, Instruct2) begin
+  case (OPCode)
 	`OPAdd:   begin result = Instruct1 + Instruct2; end
 	`OPAnd:   begin result = Instruct1 & Instruct2; end
 	`OPMul:   begin result = Instruct1 * Instruct2; end
@@ -150,7 +150,7 @@ wire `REGNAME RegDst;
 wire `WORD ALUResult;
 reg  `ESTACKSIZE en = 1;
 reg  `CSTACKSIZE CallStack,Callstacktemp;
-reg  `OPCode s0OP, s1OP, s2OP;
+reg  `OP s0OP, s1OP, s2OP;
 reg  `REGNAME s0Src, s0Dst, s0RegDst, s1RegDst, s2RegDst;
 reg  `WORD PC;
 reg  `WORD s1SrcVal, s1DstVal;
@@ -158,7 +158,7 @@ reg  `WORD s2Val;
 
 always @(reset) begin
     halt = 0;
-    pc = 0;
+    PC = 0;
     s0OP = `OPNop;
     s1OP = `OPNop;
     s2OP = `OPNop;
