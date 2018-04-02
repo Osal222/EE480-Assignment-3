@@ -48,23 +48,23 @@
 `define OPJump		5'b11001
 `define OPJumpf		5'b11010
 
-//SRC values 
-`define SRCLoad 4'b0000
-`define SRCStore 4'b0001
-`define SRCAllen 4'b0010
-`define SRCPopen 4'b0011
-`define SRCPushen 4'b0100
-`define SRCRet 4'b0101
-`define SRCNop 4'b0110
-`define SRCTrap 4'b0111
-`define SRCCall 4'b1000
-`define SRCJump 4'b1001
-`define SRCJumpf 4'b1010
+
+//SRC values
+`define SRCLoad       4'b0000
+`define SRCStore      4'b0001
+`define SRCAllen      4'b0010
+`define SRCPopen      4'b0011
+`define SRCPushen     4'b0100
+`define SRCRet        4'b0101
+`define SRCNop		4'b0110
+`define SRCTrap		4'b0111
+`define SRCCall		4'b1000
+`define SRCJump		4'b1001
+`define SRCJumpf	4'b1010
 
 
-//Not sure if this works, this is for the ext. op
 
-// Decoder is not finished
+
 /////////////////////////////////////////////////////////////////////
 module decode(out, regd, in, ireg);
 output reg `OPCode out;
@@ -81,7 +81,7 @@ always @(in, ireg) begin
 		case (ir `OPCode)
 			`OP8Reg:begin
 			regd=0;
-			case (ir ‘Dest)
+			case (ir `Dest)
 				`SRCLoad: opout = `OPLoad;
 				`SRCStore: opout = `OPStore;
 				`SRCAllen: opout = `OPAllen;
@@ -103,9 +103,6 @@ end
 endmodule
 
 
-
-				
-			`
 /////////////////////////////////////////////////////////////////////
 
 
@@ -152,7 +149,7 @@ wire `OP DecOP;
 wire `REGNAME RegDst;
 wire `WORD ALUResult;
 reg  `ESTACKSIZE en = 1;
-reg  `CSTACKSIZE CallStack;
+reg  `CSTACKSIZE CallStack,Callstacktemp;
 reg  `OPCode s0OP, s1OP, s2OP;
 reg  `REGNAME s0Src, s0Dst, s0RegDst, s1RegDst, s2RegDst;
 reg  `WORD PC;
@@ -181,15 +178,16 @@ always @(*) begin
         (s1OP == `OPJump) ? s1SrcVal: ((s1OP == `OPCall) &&     
         (en[0] == 1)) ? s1SrcVal: ((s1OP == `OPRet) &&(en[0] == 1)) ?          
         CallStack[15:0] : (PC + 1); 
-    
+		Callstacktemp = CallStack;
     if(s1OP == `OPJumpf && s1DstVal == 0) begin
         en[0] = ~en[0];
     end
     if(s1OP == `OPCall && en[0] == 1) begin
-        CallStack = CallStack[47:0], PC;
+		
+        CallStack = {Callstacktemp[47:0], PC};
     end
     if(s1OP == `OPRet && en[0] == 1) begin
-        CallStack = CallStack[63:48], CallStack[63:16];
+        CallStack = {Callstacktemp[63:48], Callstacktemp[63:16]};
     end
 end
 
